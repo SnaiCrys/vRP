@@ -356,6 +356,12 @@ local lang = {
         request = "[BET] Do you want to bet {1} $ ?",
         started = "~g~Bet started."
       }
+    },
+    radio = {
+      title = "Radio",
+      off = {
+        title = "> turn off"
+      }
     }
   },
   garage = {
@@ -443,6 +449,7 @@ local lang = {
     }
   },
   itemtr = {
+    not_enough_reagents = "~r~Not enough reagents.",
     informer = {
       title = "Illegal Informer",
       description = "{1} $",

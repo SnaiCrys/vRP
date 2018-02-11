@@ -31,9 +31,9 @@ end
 -- gui menu events
 RegisterNUICallback("menu",function(data,cb)
   if data.act == "close" then
-    vRPserver.closeMenu({data.id})
+    vRPserver._closeMenu(data.id)
   elseif data.act == "valid" then
-    vRPserver.validMenuChoice({data.id,data.choice,data.mod})
+    vRPserver._validMenuChoice(data.id,data.choice,data.mod)
   end
 end)
 
@@ -42,14 +42,14 @@ RegisterNUICallback("prompt",function(data,cb)
   if data.act == "close" then
     SetNuiFocus(false)
     SetNuiFocus(false)
-    vRPserver.promptResult({data.result})
+    vRPserver._promptResult(data.result)
   end
 end)
 
 -- gui request event
 RegisterNUICallback("request",function(data,cb)
   if data.act == "response" then
-    vRPserver.requestResult({data.id,data.ok})
+    vRPserver._requestResult(data.id,data.ok)
   end
 end)
 
@@ -130,6 +130,44 @@ function tvRP.removeDiv(name)
   SendNUIMessage({act="remove_div", name = name})
 end
 
+-- AUDIO
+
+-- play audio source (once)
+--- url: valid audio HTML url (ex: .ogg/.wav/direct ogg-stream url)
+--- volume: 0-1 
+--- x,y,z: position (omit for unspatialized)
+--- max_dist  (omit for unspatialized)
+function tvRP.playAudioSource(url, volume, x, y, z, max_dist)
+  SendNUIMessage({act="play_audio_source", url = url, x = x, y = y, z = z, volume = volume, max_dist = max_dist})
+end
+
+-- set named audio source (looping)
+--- name: source name
+--- url: valid audio HTML url (ex: .ogg/.wav/direct ogg-stream url)
+--- volume: 0-1 
+--- x,y,z: position (omit for unspatialized)
+--- max_dist  (omit for unspatialized)
+function tvRP.setAudioSource(name, url, volume, x, y, z, max_dist)
+  SendNUIMessage({act="set_audio_source", name = name, url = url, x = x, y = y, z = z, volume = volume, max_dist = max_dist})
+end
+
+-- remove named audio source
+function tvRP.removeAudioSource(name)
+  SendNUIMessage({act="remove_audio_source", name = name})
+end
+
+local listener_wait = math.ceil(1/cfg.audio_listener_rate)
+
+Citizen.CreateThread(function()
+  while true do
+    Citizen.Wait(listener_wait)
+
+    local x,y,z = table.unpack(GetGameplayCamCoord())
+    local fx,fy,fz = tvRP.getCamDirection()
+    SendNUIMessage({act="audio_listener", x = x, y = y, z = z, fx = fx, fy = fy, fz = fz})
+  end
+end)
+
 -- CONTROLS/GUI
 
 local paused = false
@@ -151,7 +189,7 @@ Citizen.CreateThread(function()
     if IsControlJustPressed(table.unpack(cfg.controls.phone.cancel)) then SendNUIMessage({act="event",event="CANCEL"}) end
 
     -- open general menu
-    if IsControlJustPressed(table.unpack(cfg.controls.phone.open)) and (not tvRP.isInComa() or not cfg.coma_disable_menu) and (not tvRP.isHandcuffed() or not cfg.handcuff_disable_menu) then vRPserver.openMainMenu({}) end
+    if IsControlJustPressed(table.unpack(cfg.controls.phone.open)) and (not tvRP.isInComa() or not cfg.coma_disable_menu) and (not tvRP.isHandcuffed() or not cfg.handcuff_disable_menu) then vRPserver._openMainMenu() end
 
     -- F5,F6 (default: control michael, control franklin)
     if IsControlJustPressed(table.unpack(cfg.controls.request.yes)) then SendNUIMessage({act="event",event="F5"}) end
