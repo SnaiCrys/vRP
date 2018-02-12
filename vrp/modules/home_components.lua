@@ -118,65 +118,65 @@ local function gametable_create(owner_id, stype, sid, cid, config, data, x, y, z
       -- launch bet
       menu[lang.home.gametable.bet.title()] = {function(player, choice)
         local amount = vRP.prompt(player, lang.home.gametable.bet.prompt(), "")
-          amount = parseInt(amount)
-          if amount > 0 then
-            if vRP.tryPayment(user_id,amount) then
-              vRPclient._notify(player,lang.home.gametable.bet.started())
-              -- init bet total and players (add by default the bet launcher)
-              local bet_total = amount 
-              local bet_players = {}
-              local bet_opened = true
-              table.insert(bet_players, player)
+        amount = parseInt(amount)
+        if amount > 0 then
+          if vRP.tryPayment(user_id,amount) then
+            vRPclient._notify(player,lang.home.gametable.bet.started())
+            -- init bet total and players (add by default the bet launcher)
+            local bet_total = amount 
+            local bet_players = {}
+            local bet_opened = true
+            table.insert(bet_players, player)
 
-              local close_bet = function()
-                if bet_opened then
-                  bet_opened = false
-                  -- select winner
-                  local wplayer = bet_players[math.random(1,#bet_players)]
-                  local wuser_id = vRP.getUserId(wplayer)
-                  if wuser_id then
-                    vRP.giveMoney(wuser_id, bet_total)
-                    vRPclient._notify(wplayer,lang.money.received({bet_total}))
-                    vRPclient._playAnim(wplayer,true,{{"mp_player_introck","mp_player_int_rock",1}},false)
-                  end
+            local close_bet = function()
+              if bet_opened then
+                bet_opened = false
+                -- select winner
+                local wplayer = bet_players[math.random(1,#bet_players)]
+                local wuser_id = vRP.getUserId(wplayer)
+                if wuser_id then
+                  vRP.giveMoney(wuser_id, bet_total)
+                  vRPclient._notify(wplayer,lang.money.received({bet_total}))
+                  vRPclient._playAnim(wplayer,true,{{"mp_player_introck","mp_player_int_rock",1}},false)
+                end
+              end
+            end
+
+            -- send bet request to all nearest players
+            local players = vRPclient.getNearestPlayers(player,7)
+              local pcount = 0
+              for k,v in pairs(players) do
+                pcount = pcount+1
+                local nplayer = parseInt(k)
+                local nuser_id = vRP.getUserId(nplayer)
+                if nuser_id then -- request
+                  Citizen.CreateThread(function() -- non blocking
+                    if vRP.request(nplayer,lang.home.gametable.bet.request({amount}), 30) and bet_opened then
+                      if vRP.tryPayment(nuser_id,amount) then -- register player bet
+                        bet_total = bet_total+amount
+                        table.insert(bet_players, nplayer)
+                        vRPclient._notify(nplayer,lang.money.paid({amount}))
+                      else
+                        vRPclient._notify(nplayer,lang.money.not_enough())
+                      end
+                    end
+
+                    pcount = pcount-1
+                    if pcount == 0 then -- autoclose bet, everyone is ok
+                      close_bet()
+                    end
+                  end)
                 end
               end
 
-              -- send bet request to all nearest players
-              local players = vRPclient.getNearestPlayers(player,7)
-                local pcount = 0
-                for k,v in pairs(players) do
-                  pcount = pcount+1
-                  local nplayer = parseInt(k)
-                  local nuser_id = vRP.getUserId(nplayer)
-                  if nuser_id then -- request
-                    Citizen.CreateThread(function() -- non blocking
-                      if vRP.request(nplayer,lang.home.gametable.bet.request({amount}), 30) and bet_opened then
-                        if vRP.tryPayment(nuser_id,amount) then -- register player bet
-                          bet_total = bet_total+amount
-                          table.insert(bet_players, nplayer)
-                          vRPclient._notify(nplayer,lang.money.paid({amount}))
-                        else
-                          vRPclient._notify(nplayer,lang.money.not_enough())
-                        end
-                      end
-
-                      pcount = pcount-1
-                      if pcount == 0 then -- autoclose bet, everyone is ok
-                        close_bet()
-                      end
-                    end)
-                  end
-                end
-
-                -- bet timeout
-                SetTimeout(32000, close_bet)
-            else
-              vRPclient._notify(player,lang.money.not_enough())
-            end
+              -- bet timeout
+              SetTimeout(32000, close_bet)
           else
-            vRPclient._notify(player,lang.common.invalid_value())
+            vRPclient._notify(player,lang.money.not_enough())
           end
+        else
+          vRPclient._notify(player,lang.common.invalid_value())
+        end
       end,lang.home.gametable.bet.description()}
 
       -- open the menu

@@ -188,7 +188,7 @@ local function ch_give(player,choice)
       if nuser_id then
         -- prompt number
         local amount = vRP.prompt(player,lang.money.give.prompt(),"")
-        local amount = parseInt(amount)
+        amount = parseInt(amount)
         if amount > 0 and vRP.tryPayment(user_id,amount) then
           vRP.giveMoney(nuser_id,amount)
           vRPclient._notify(player,lang.money.given({amount}))

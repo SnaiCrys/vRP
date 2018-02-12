@@ -34,7 +34,7 @@ function ch_give(idname, player, choice)
       if nuser_id then
         -- prompt number
         local amount = vRP.prompt(player,lang.inventory.give.prompt({vRP.getInventoryItemAmount(user_id,idname)}),"")
-        local amount = parseInt(amount)
+        amount = parseInt(amount)
         -- weight check
         local new_weight = vRP.getInventoryWeight(nuser_id)+vRP.getItemWeight(idname)*amount
         if new_weight <= vRP.getInventoryMaxWeight(nuser_id) then
@@ -64,7 +64,7 @@ function ch_trash(idname, player, choice)
   if user_id then
     -- prompt number
     local amount = vRP.prompt(player,lang.inventory.trash.prompt({vRP.getInventoryItemAmount(user_id,idname)}),"")
-    local amount = parseInt(amount)
+    amount = parseInt(amount)
     if vRP.tryGetInventoryItem(user_id,idname,amount,false) then
       vRPclient._notify(player,lang.inventory.trash.done({vRP.getItemName(idname),amount}))
       vRPclient._playAnim(player,true,{{"pickup_object","pickup_low",1}},false)
